@@ -38,7 +38,7 @@ class State:
         
     def __eq__(self, s2):
         for p in range(3):
-            if self.piles[p] != old.piles[p]: return False
+            if self.piles[p] != s2.piles[p]: return False
         return True
 
     def __str__(self):
