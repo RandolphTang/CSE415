@@ -13,6 +13,11 @@ TO PROVIDE A GOOD STRUCTURE FOR YOUR IMPLEMENTATION.
 
 from agent_base import KAgent
 from game_types import State, Game_Type, deep_copy
+from google import genai 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 AUTHORS = 'Randolph Jenkins and Aidan Lee' 
 
@@ -38,6 +43,8 @@ class OurAgent(KAgent):  # Keep the class name "OurAgent" so a game master
         self.zobrist_table_num_entries_this_turn = -1
         self.zobrist_table_num_hits_this_turn = -1
         self.current_game_type = None
+        self.client = None
+        self.sys_instruct = None
 
     def introduce(self):
         intro = '\nMy name is daddy,\n'+\
@@ -64,17 +71,23 @@ class OurAgent(KAgent):  # Keep the class name "OurAgent" so a game master
            pass
            # Optionally, import your LLM API here.
            # Then you can use it to help create utterances.
+
+       self.sys_instruct = "You are a utterance commentor for a Adversarial Search \n" +\
+                    "tic-tac toe game, and you will comment on each move they play based on \n" +\
+                    "alpha_beta_cutoffs_this_turn, num_static_evals_this_turn \n" +\
+                    "you persona is terence fletcher from the game Whiplash. Limit you response to at most one sentence\n" 
+       self.client = genai.Client(api_key=os.getenv('GEMINI_KEY')) 
+
      
        # Write code to save the relevant information in variables
        # local to this instance of the agent.
        # Game-type info can be in global variables.
-
+    
        self.current_game_type = game_type
        self.playing = what_side_to_play
        self.opponent = opponent_nickname
        self.time_per_move = expected_time_per_move
 
-       print("Change this to return 'OK' when ready to test the method.")
        return "OK"
    
     # The core of your agent's ability should be implemented here:             
@@ -82,11 +95,6 @@ class OurAgent(KAgent):  # Keep the class name "OurAgent" so a game master
                   autograding=True, use_alpha_beta=True,
                   use_zobrist_hashing=False, max_ply=3,
                   special_static_eval_fn=None):
-        print(f"Alpha-beta enabled: {use_alpha_beta}")
-        print("make_move has been called")
-
-        print("code to compute a good move should go here.")
-
         self.alpha_beta_cutoffs_this_turn = 0  
         self.num_static_evals_this_turn = 0
         self.special_eval_fn = special_static_eval_fn
@@ -107,7 +115,20 @@ class OurAgent(KAgent):  # Keep the class name "OurAgent" so a game master
             i, j = best_move
             new_state.board[i][j] = self.playing
             new_remark = f"I played at position ({i}, {j})"
-            return [[best_move, new_state]+stats, new_remark]
+
+            prompt = (
+                f"Explain how you would comment this move players mode based on "
+                f"the alpha_beta_cutoffs_this_turn {self.alpha_beta_cutoffs_this_turn}"
+                f"and the num_static_evals_this_turn {self.num_static_evals_this_turn}"
+            )   
+            response = self.client.models.generate_content(
+                model="gemini-2.0-flash",
+                config=genai.types.GenerateContentConfig(
+                    system_instruction=self.sys_instruct),
+                contents=[prompt]
+            )
+            new_remark += response.text
+            return [[best_move, new_state], new_remark]
     
         new_remark = "I need to think of something appropriate.\n" +\
         "Well, I guess I can say that this move is probably illegal."
@@ -122,8 +143,6 @@ class OurAgent(KAgent):  # Keep the class name "OurAgent" so a game master
             pruning=False,
             alpha=None,
             beta=None):
-        print(f"Pruning enabled: {pruning}")
-        print("Calling minimax. We need to implement its body.")
 
         if depth_remaining == 0:
             self.num_static_evals_this_turn += 1
@@ -186,7 +205,6 @@ class OurAgent(KAgent):  # Keep the class name "OurAgent" so a game master
         # etc. 
  
     def static_eval(self, state, game_type=None):
-        print('calling static_eval. Its value needs to be computed!')
         # Values should be higher when the states are better for X,
         # lower when better for O.
         k = game_type.k
