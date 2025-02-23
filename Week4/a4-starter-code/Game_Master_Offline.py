@@ -21,7 +21,7 @@ from winTesterForK import winTesterForK
 from game_types import TTT, FIAR, Cassini
 
 TIME_PER_MOVE = 1.0 # In seconds
-INITIAL_STATE = TTT.initial_state
+INITIAL_STATE = Cassini.initial_state
 
 ALLOW_CERTAIN_IMPORTS = True
 
@@ -130,7 +130,9 @@ def runGame():
         printState(currentState)
         if USE_HTML: gameToHTML.stateToHTML(currentState)
         turnCount += 1
-        if turnCount == TURN_LIMIT: FINISHED=True
+        print(turnCount)
+        if turnCount == TURN_LIMIT: 
+            FINISHED=True
         else:
             sleep(WAIT_TIME_AFTER_MOVES) # NOT TOO FAST.
     printState(currentState)
@@ -181,7 +183,7 @@ def test():
     # Stand-alone test
     print("Starting stand-alone test of GameMaster.py")
     # Edit this to change what version of K-in-a-Row is used.
-    set_game(TTT) # default is Tic-Tac-Toe
+    set_game(FIAR) # default is Tic-Tac-Toe
     #set_game(FIAR) # Five in a Row
     # Import 1 or 2 agent files here.
     # If using only 1, create 2 instances of it, one of
@@ -189,8 +191,9 @@ def test():
 
     #import yourUWNetID_KInARow as h
     import tang1125_KInARow as h
+    import RandomPlayer as hx
     px = h.OurAgent()
-    po = h.OurAgent(twin=True)
+    po = hx.OurAgent(twin=True)
     set_players(px, po)
     print("Players are set.")
     print("Now let's run the game.")
