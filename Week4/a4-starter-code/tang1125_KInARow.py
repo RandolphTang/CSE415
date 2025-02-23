@@ -79,7 +79,7 @@ class OurAgent(KAgent):  # Keep the class name "OurAgent" so a game master
                     f"the opponent's previous move or their utterance last move, or say something irrelevant but still in character.\n" +\
                     f"You are playing {what_side_to_play} against {opponent_nickname}.\n" +\
                     "Limit your response to at most two sentences.\n" 
-            self.client = genai.Client(api_key='AIzaSyCNDHc1wjM3Qm67x8XKE6QpbmPYZ0WLzvs') 
+            self.client = genai.Client(api_key='') 
      
        # Write code to save the relevant information in variables
        # local to this instance of the agent.
