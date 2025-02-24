@@ -250,62 +250,59 @@ class OurAgent(KAgent):  # Keep the class name "OurAgent" so a game master
             count += row.count(' ')
         return count
  
-    def static_eval(self, state, game_type=None):
-        # Values should be higher when the states are better for X,
-        # lower when better for O.
+    def static_eval(self, state, game_type=None, depth_remaining=0):
         k = game_type.k
+        board = state.board
+        rows, cols = len(board), len(board[0])
+        depth_mult = 1 if depth_remaining == 0 else depth_remaining
+        
+        WIN_VALUE = 100000
+        NEAR_WIN_VALUE = 100
+        
+        def evaluate_window(window):
+            x_count = window.count('X')
+            o_count = window.count('O')
+            block_count = window.count('-')
+            empty_count = len(window) - x_count - o_count - block_count
+            
+            if x_count == k and empty_count == 0:
+                return WIN_VALUE if self.playing == 'X' else WIN_VALUE // 10
+            if o_count == k and empty_count == 0:
+                return -WIN_VALUE if self.playing == 'O' else -WIN_VALUE // 10
+                
+            if empty_count == 0:
+                if x_count == k - 1 and o_count == 0:
+                    return NEAR_WIN_VALUE
+                if o_count == k - 1 and x_count == 0:
+                    return -NEAR_WIN_VALUE
+                    
+            if block_count > 0:
+                return 0
+            return x_count - o_count - empty_count
+
         score = 0
         
-        # Check all rows, columns, and diagonals
-        def evaluate_line(line):
-            line_score = 0
-            for i in range(len(line) - k + 1): # for each k-length window in a line
-                window = line[i:i + k]
-                if window.count('X') == k: # X wins
-                    return 999999999
-                elif window.count('O') == k: # O wins
-                    return -999999999
-                
-                if 'X' in window and 'O' not in window and '-' not in window: # X is close to a winning move
-                    line_score += 10 ** window.count('X')
-                elif 'O' in window and 'X' not in window and '-' not in window: # O is close to a winning move
-                    line_score -= 10 ** window.count('O')
-                else:
-                    line_score += window.count('X') - window.count('O')
-            return line_score
+        # Evaluate rows (with optimization to avoid unnecessary slicing)
+        for row in board:
+            for i in range(cols - k + 1):
+                score += evaluate_window(row[i:i + k])
+
+        for c in range(cols):
+            col = [board[r][c] for r in range(rows)]
+            for i in range(rows - k + 1):
+                score += evaluate_window(col[i:i + k])
         
-        # Evaluate rows
-        for row in state.board:
-            score += evaluate_line(row)
+        for r in range(rows - k + 1):
+            for c in range(cols - k + 1):
+                diag = [board[r + i][c + i] for i in range(k)]
+                score += evaluate_window(diag)
         
-        # Evaluate columns
-        for col in range(len(state.board[0])):
-            score += evaluate_line([state.board[row][col] for row in range(len(state.board))])
-        
-        # Evaluate diagonals
-        def get_diagonals(board):
-            diagonals = []
-            rows, cols = len(board), len(board[0])
-            
-            # Main diagonals (top-left to bottom-right)
-            for r in range(rows - k + 1):
-                diagonals.append([board[r + i][i] for i in range(min(rows - r, cols))])
-            for c in range(1, cols - k + 1):
-                diagonals.append([board[i][c + i] for i in range(min(rows, cols - c))])
-            
-            # Anti-diagonals (top-right to bottom-left)
-            for r in range(rows - k + 1):
-                diagonals.append([board[r + i][cols - 1 - i] for i in range(min(rows - r, cols))])
-            for c in range(1, cols - k + 1):
-                diagonals.append([board[i][cols - 1 - (c + i)] for i in range(min(rows, cols - c))])
-            
-            return diagonals
-        
-        for diagonal in get_diagonals(state.board):
-            score += evaluate_line(diagonal)
+        for r in range(rows - k + 1):
+            for c in range(k - 1, cols):
+                diag = [board[r + i][c - i] for i in range(k)]
+                score += evaluate_window(diag)
         
         return score
- 
     
     
 # OPTIONAL THINGS TO KEEP TRACK OF:

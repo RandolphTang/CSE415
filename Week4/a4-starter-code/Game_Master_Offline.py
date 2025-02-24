@@ -18,10 +18,10 @@ if USE_HTML: import gameToHTML
 
 from winTesterForK import winTesterForK
 
-from game_types import TTT, FIAR, Cassini
+from game_types import TTT, FIAR, Cassini, Randy
 
-TIME_PER_MOVE = 1.0 # In seconds
-INITIAL_STATE = Cassini.initial_state
+TIME_PER_MOVE = 1 # In seconds
+INITIAL_STATE = Randy.initial_state
 
 ALLOW_CERTAIN_IMPORTS = True
 
